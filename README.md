@@ -1,7 +1,7 @@
+# lib.go.sound
+
 ## TODO
 
-- [] Corriger le problème d'amplitude que l'on rajoute au niveau du `WriteTo` pour le moment.
-- [] Ajouter les options de build au constructeur et supprimer `Config`.
 - [] Utiliser la feature `embed` de Golang pour créer un test qui va checker si ce que l'on a écris dans un buffer
   - Corrspond à ce que l'on a sauvegardé dans notre fichier de référence (retrouver la vidéo qui présente ce machin)
 - Have fun with other stuff

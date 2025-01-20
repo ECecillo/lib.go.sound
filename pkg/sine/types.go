@@ -6,31 +6,46 @@ import (
 	"github.com/ECecillo/lib.go.sound/pkg/format"
 )
 
-// TODO: remove once we add options in constructor.
-type Config struct {
-	Frequency    float64       // Fréquence en Hz
-	Duration     time.Duration // Durée en secondes
-	Amplitude    float64       // Amplitude (optionnelle, par défaut 1.0)
-	SamplingRate float64       // Fréquence d'échantillonnage en Hz
-	Format       format.AudioFormat
-}
-
 type Sine struct {
-	Frequency    float64       // Fréquence en Hz
-	Duration     time.Duration // Durée en secondes
-	Amplitude    float64       // Amplitude (optionnelle, par défaut 1.0)
-	SamplingRate float64       // Fréquence d'échantillonnage en Hz
+	Frequency    float64       // Frequency in Hz
+	Duration     time.Duration // Duration of the signal
+	Amplitude    float64       // Amplitude (optional, default 1.0)
+	SamplingRate float64       // Sampling frequency in Hz
 	Format       format.AudioFormat
 }
 
-// TODO: Option to configure config value or set default one
-// TODO: remove conf once we added options
-func NewSine(conf Config) *Sine {
-	return &Sine{
-		Frequency:    conf.Frequency,
-		Duration:     conf.Duration,
-		Amplitude:    conf.Amplitude,
-		SamplingRate: conf.SamplingRate,
-		Format:       conf.Format,
+type Option func(*Sine)
+
+func NewSine(frequency float64, duration time.Duration, options ...Option) *Sine {
+	sine := &Sine{
+		Frequency:    frequency,
+		Duration:     duration,
+		Amplitude:    1.0,
+		SamplingRate: 44100.0,
+		Format:       format.PCM16{},
+	}
+
+	for _, opt := range options {
+		opt(sine)
+	}
+
+	return sine
+}
+
+func WithAmplitude(amplitude float64) Option {
+	return func(s *Sine) {
+		s.Amplitude = amplitude
+	}
+}
+
+func WithSamplingRate(rate float64) Option {
+	return func(s *Sine) {
+		s.SamplingRate = rate
+	}
+}
+
+func WithFormat(fmt format.AudioFormat) Option {
+	return func(s *Sine) {
+		s.Format = fmt
 	}
 }

@@ -37,13 +37,17 @@ func (s Sine) Generate() ([]float64, error) {
 
 	for n := range totalSamples {
 
-		t := float64(n) / s.SamplingRate
-
-		angle := 2 * math.Pi * s.Frequency * t
-		value := s.Amplitude * math.Sin(angle)
-
+		value := calculateSampleValue(n, s)
 		result[n] = value
 
 	}
 	return result, nil
+}
+
+func calculateSampleValue(n int, s Sine) float64 {
+	t := float64(n) / s.SamplingRate
+
+	angle := 2 * math.Pi * s.Frequency * t
+	value := s.Amplitude * math.Sin(angle)
+	return value
 }

@@ -2,8 +2,8 @@
 
 ## TODO
 
-- [] Utiliser la feature `embed` de Golang pour créer un test qui va checker si ce que l'on a écris dans un buffer
-  - Corrspond à ce que l'on a sauvegardé dans notre fichier de référence (retrouver la vidéo qui présente ce machin)
+- [ ] Trouver un moyen de tester la lib et s'assurer que le generator fonctionne correctement
+- Comment on check l'intégrité de données binaire ?
 - Have fun with other stuff
 
 ## Commands

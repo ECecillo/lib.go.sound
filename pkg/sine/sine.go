@@ -37,15 +37,16 @@ func (s Sine) Generate() ([]float64, error) {
 
 	for n := range totalSamples {
 
-		value := calculateSampleValue(n, s)
+		value := s.calculateSampleValue(n)
 		result[n] = value
 
 	}
 	return result, nil
 }
 
-func calculateSampleValue(n int, s Sine) float64 {
-	t := float64(n) / s.SamplingRate
+func (s Sine) calculateSampleValue(sampleIndex int) float64 {
+	// return the x value of time axis.
+	t := float64(sampleIndex) / s.SamplingRate
 
 	angle := 2 * math.Pi * s.Frequency * t
 	value := s.Amplitude * math.Sin(angle)

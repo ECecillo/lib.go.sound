@@ -363,16 +363,3 @@ just ci-fast
 ```bash
 just ci-comprehensive
 ```
-
-## Command Runner
-
-This project uses [Just](https://github.com/casey/just) instead of Make for a better developer experience:
-
-- ✅ Cleaner syntax
-- ✅ Better error messages
-- ✅ Works from any subdirectory
-- ✅ Cross-platform support
-- ✅ Modern features
-
-See `JUSTFILE_GUIDE.md` for complete documentation.
-

@@ -13,8 +13,8 @@ func FuzzPCM16_ConvertSample(f *testing.F) {
 	f.Add(-1.0)
 	f.Add(0.5)
 	f.Add(-0.5)
-	f.Add(2.0)   // Out of range
-	f.Add(-2.0)  // Out of range
+	f.Add(2.0)  // Out of range
+	f.Add(-2.0) // Out of range
 	f.Add(math.MaxFloat64)
 	f.Add(-math.MaxFloat64)
 
@@ -37,10 +37,8 @@ func FuzzPCM16_ConvertSample(f *testing.F) {
 		// Reconstruct the value to verify it's within int16 range
 		value := int16(result[0]) | int16(result[1])<<8
 
-		// Value should be within int16 range
-		if value < math.MinInt16 || value > math.MaxInt16 {
-			t.Errorf("Reconstructed value %d out of int16 range", value)
-		}
+		// Value should be within int16 range (always true for int16, but kept for documentation)
+		_ = value // value is always within int16 range by definition
 
 		// If input was in [-1, 1], verify output scaling is reasonable
 		if sample >= -1.0 && sample <= 1.0 {
@@ -81,10 +79,8 @@ func FuzzPCM32_ConvertSample(f *testing.F) {
 		// Reconstruct to verify it's within int32 range
 		value := int32(result[0]) | int32(result[1])<<8 | int32(result[2])<<16 | int32(result[3])<<24
 
-		// Value should be within int32 range (this is implicit, but we check for sanity)
-		if value < math.MinInt32 || value > math.MaxInt32 {
-			t.Errorf("Reconstructed value %d out of int32 range", value)
-		}
+		// Value should be within int32 range (always true for int32, but kept for documentation)
+		_ = value // value is always within int32 range by definition
 	})
 }
 
@@ -182,13 +178,13 @@ func FuzzAllFormats_ConsistentBehavior(f *testing.F) {
 	f.Add(-1.0)
 
 	formats := []struct {
-		name         string
 		format       AudioFormat
+		name         string
 		expectedSize int
 	}{
-		{"PCM16", PCM16{}, 2},
-		{"PCM32", PCM32{}, 4},
-		{"Float64", Float64{}, 8},
+		{PCM16{}, "PCM16", 2},
+		{PCM32{}, "PCM32", 4},
+		{Float64{}, "Float64", 8},
 	}
 
 	f.Fuzz(func(t *testing.T, sample float64) {

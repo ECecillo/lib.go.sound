@@ -3,7 +3,7 @@
 [![CI](https://github.com/ECecillo/lib.go.sound/actions/workflows/ci.yml/badge.svg)](https://github.com/ECecillo/lib.go.sound/actions/workflows/ci.yml)
 [![Nightly](https://github.com/ECecillo/lib.go.sound/actions/workflows/nightly.yml/badge.svg)](https://github.com/ECecillo/lib.go.sound/actions/workflows/nightly.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ECecillo/lib.go.sound)](https://goreportcard.com/report/github.com/ECecillo/lib.go.sound)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A Go library for generating and exporting sinusoidal signals with customizable parameters
 such as frequency (`F`), amplitude (`A`), sampling rate (`f`), and duration(`d`).

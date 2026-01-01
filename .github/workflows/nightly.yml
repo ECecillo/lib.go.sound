@@ -129,18 +129,30 @@ jobs:
         cache: true
 
     - name: Run tests with memory profiling
-      run: go test ./... -memprofile=mem.prof -memprofilerate=1
-
-    - name: Analyze memory profile
       run: |
-        go tool pprof -top -sample_index=alloc_space mem.prof
-        go tool pprof -top -sample_index=alloc_objects mem.prof
+        mkdir -p profiles
+        for pkg in $(go list ./... | grep -v '/cmd'); do
+          pkg_name=$(echo $pkg | sed 's/.*\///g')
+          echo "Profiling package: $pkg"
+          go test $pkg -memprofile=profiles/mem_${pkg_name}.prof -memprofilerate=1
+        done
 
-    - name: Upload memory profile
+    - name: Analyze memory profiles
+      run: |
+        for prof in profiles/mem_*.prof; do
+          if [ -f "$prof" ]; then
+            echo "=== Analyzing $prof ==="
+            go tool pprof -top -sample_index=alloc_space $prof
+            go tool pprof -top -sample_index=alloc_objects $prof
+            echo ""
+          fi
+        done
+
+    - name: Upload memory profiles
       uses: actions/upload-artifact@v4
       with:
-        name: memory-profile-${{ github.sha }}
-        path: mem.prof
+        name: memory-profiles-${{ github.sha }}
+        path: profiles/*.prof
 
   race-detection:
     name: Race Detection

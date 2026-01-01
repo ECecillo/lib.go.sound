@@ -31,15 +31,12 @@ func (s Sine) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (s Sine) Generate() ([]float64, error) {
-
 	totalSamples := int(s.SamplingRate * s.Duration.Seconds())
-	result := make([]float64, totalSamples)
+	result := make([]float64, 0, totalSamples)
 
 	for n := range totalSamples {
-
 		value := s.calculateSampleValue(n)
-		result[n] = value
-
+		result = append(result, value)
 	}
 	return result, nil
 }

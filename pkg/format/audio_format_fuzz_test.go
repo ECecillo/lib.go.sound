@@ -27,7 +27,7 @@ func FuzzPCM16_ConvertSample(f *testing.F) {
 		}
 
 		// Should never panic
-		result := format.ConvertSample(sample)
+		result := format.Encode(format.Quantize(sample))
 
 		// Should always produce exactly 2 bytes
 		if len(result) != 2 {
@@ -69,7 +69,7 @@ func FuzzPCM32_ConvertSample(f *testing.F) {
 		}
 
 		// Should never panic
-		result := format.ConvertSample(sample)
+		result := format.Encode(format.Quantize(sample))
 
 		// Should always produce exactly 4 bytes
 		if len(result) != 4 {
@@ -101,7 +101,7 @@ func FuzzFloat64_ConvertSample(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, sample float64) {
 		// Float64 should handle all values, including NaN and Inf
-		result := format.ConvertSample(sample)
+		result := format.Encode(format.Quantize(sample))
 
 		// Should always produce exactly 8 bytes
 		if len(result) != 8 {
@@ -194,7 +194,7 @@ func FuzzAllFormats_ConsistentBehavior(f *testing.F) {
 
 		for _, ft := range formats {
 			// Should never panic
-			result := ft.format.ConvertSample(sample)
+			result := ft.format.Encode(ft.format.Quantize(sample))
 
 			// Should produce correct byte count
 			if len(result) != ft.expectedSize {

@@ -5,8 +5,9 @@ import (
 )
 
 type AudioFormat interface {
-	BitDepth() int                // BitDepth return an integer representing the byte deph of the format.
-	ConvertSample(float64) []byte // ConvertSample return the sample value in byte using byte shifting.
+	BitDepth() int            // BitDepth return an integer representing the byte deph of the format.
+	Quantize(float64) int     // Quantize converts a float64 sample to an integer representation.
+	Encode(int) []byte        // Encode converts the integer value to bytes using byte shifting.
 }
 
 type PCM16 struct{}
@@ -31,7 +32,7 @@ func Clamp(value, minVal, maxVal float64) float64 {
 	return value
 }
 
-func (f PCM16) ConvertSample(sample float64) []byte {
+func (f PCM16) Quantize(sample float64) int {
 	sample = Clamp(sample, -1.0, 1.0)
 	// Scale the float64 sample (usually btw -1.0 and +1.0)
 	// to the full int16 range (-32768 to 32767)
@@ -39,9 +40,13 @@ func (f PCM16) ConvertSample(sample float64) []byte {
 	// Example: if we have 0.85 then int16(0.85) = 0 which is false.
 	//
 	// Why 2^(16) - 1 ? to avoid int overflow
-	value := int16(sample * 32767.0)
-	// Little-endian, cutting 16-bits to 2-bytes.
-	return []byte{byte(value & 0xFF), byte((value >> 8) & 0xFF)}
+	return int(sample * 32767.0)
+}
+
+func (f PCM16) Encode(value int) []byte {
+	// Convert to int16 and encode as little-endian, cutting 16-bits to 2-bytes.
+	val16 := int16(value)
+	return []byte{byte(val16 & 0xFF), byte((val16 >> 8) & 0xFF)}
 }
 
 type PCM32 struct{}
@@ -50,13 +55,18 @@ func (f PCM32) BitDepth() int {
 	return 32
 }
 
-func (f PCM32) ConvertSample(sample float64) []byte {
+func (f PCM32) Quantize(sample float64) int {
 	sample = Clamp(sample, -1.0, 1.0)
 	// Scale the float64 sample to the full int32 range (-2147483648 to 2147483647)
-	value := int32(sample * 2147483647.0)
+	return int(sample * 2147483647.0)
+}
+
+func (f PCM32) Encode(value int) []byte {
+	// Convert to int32 and encode as little-endian bytes
+	val32 := int32(value)
 	return []byte{
-		byte(value & 0xFF), byte((value >> 8) & 0xFF),
-		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),
+		byte(val32 & 0xFF), byte((val32 >> 8) & 0xFF),
+		byte((val32 >> 16) & 0xFF), byte((val32 >> 24) & 0xFF),
 	}
 }
 
@@ -66,13 +76,18 @@ func (f Float64) BitDepth() int {
 	return 64
 }
 
-func (f Float64) ConvertSample(sample float64) []byte {
-	// (IEEE 754)
-	value := math.Float64bits(sample)
+func (f Float64) Quantize(sample float64) int {
+	// For Float64, we convert to IEEE 754 bit representation
+	return int(math.Float64bits(sample))
+}
+
+func (f Float64) Encode(value int) []byte {
+	// Convert back to uint64 for byte encoding (IEEE 754)
+	val64 := uint64(value)
 	return []byte{
-		byte(value & 0xFF), byte((value >> 8) & 0xFF),
-		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),
-		byte((value >> 32) & 0xFF), byte((value >> 40) & 0xFF),
-		byte((value >> 48) & 0xFF), byte((value >> 56) & 0xFF),
+		byte(val64 & 0xFF), byte((val64 >> 8) & 0xFF),
+		byte((val64 >> 16) & 0xFF), byte((val64 >> 24) & 0xFF),
+		byte((val64 >> 32) & 0xFF), byte((val64 >> 40) & 0xFF),
+		byte((val64 >> 48) & 0xFF), byte((val64 >> 56) & 0xFF),
 	}
 }

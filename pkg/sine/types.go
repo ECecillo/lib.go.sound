@@ -7,11 +7,11 @@ import (
 )
 
 type Sine struct {
-	Frequency    float64       // Frequency in Hz
+	Format       format.AudioFormat
 	Duration     time.Duration // Duration of the signal
+	Frequency    float64       // Frequency in Hz
 	Amplitude    float64       // Amplitude (optional, default 1.0)
 	SamplingRate float64       // Sampling frequency in Hz
-	Format       format.AudioFormat
 }
 
 type Option func(*Sine)

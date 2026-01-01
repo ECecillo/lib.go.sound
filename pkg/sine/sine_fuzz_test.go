@@ -86,9 +86,9 @@ func FuzzSineGeneration(f *testing.F) {
 		// we might sample at zero-crossing points, resulting in near-zero values.
 		// Only check this if we have good sampling density.
 		if amplitude > 0 && len(samples) >= 10 {
-			period := 1.0 / frequency                          // Period in seconds
-			periodsInDuration := duration.Seconds() / period   // Number of periods
-			samplesPerPeriod := samplingRate / frequency       // Samples per period
+			period := 1.0 / frequency                        // Period in seconds
+			periodsInDuration := duration.Seconds() / period // Number of periods
+			samplesPerPeriod := samplingRate / frequency     // Samples per period
 
 			// Only check for non-zero values if:
 			// 1. We have at least 0.5 periods (enough to reach a peak or trough)

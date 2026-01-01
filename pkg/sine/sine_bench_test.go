@@ -24,7 +24,9 @@ func BenchmarkGenerate(b *testing.B) {
 		sine := NewSine(440.0, 100*time.Millisecond, WithSamplingRate(44100.0))
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 		// Report samples per second
 		totalSamples := int(44100 * 0.1 * float64(b.N))
@@ -35,7 +37,9 @@ func BenchmarkGenerate(b *testing.B) {
 		sine := NewSine(440.0, time.Second, WithSamplingRate(44100.0))
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(44100 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -45,7 +49,9 @@ func BenchmarkGenerate(b *testing.B) {
 		sine := NewSine(440.0, time.Second, WithSamplingRate(48000.0))
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(48000 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -55,7 +61,9 @@ func BenchmarkGenerate(b *testing.B) {
 		sine := NewSine(440.0, 10*time.Second, WithSamplingRate(44100.0))
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(44100 * 10 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -79,7 +87,9 @@ func BenchmarkGenerate_DifferentFrequencies(b *testing.B) {
 			sine := NewSine(tc.freq, time.Second, WithSamplingRate(44100.0))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _ = sine.Generate()
+				if _, err := sine.Generate(); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}
@@ -92,7 +102,9 @@ func BenchmarkWriteTo(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(44100 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -104,7 +116,9 @@ func BenchmarkWriteTo(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(44100 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -116,7 +130,9 @@ func BenchmarkWriteTo(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 		totalSamples := int(44100 * float64(b.N))
 		b.ReportMetric(float64(totalSamples)/b.Elapsed().Seconds(), "samples/sec")
@@ -143,7 +159,9 @@ func BenchmarkWriteTo_DifferentDurations(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				var buf bytes.Buffer
-				_, _ = sine.WriteTo(&buf)
+				if _, err := sine.WriteTo(&buf); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}
@@ -159,7 +177,9 @@ func BenchmarkWriteTo_DifferentAmplitudes(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				var buf bytes.Buffer
-				_, _ = sine.WriteTo(&buf)
+				if _, err := sine.WriteTo(&buf); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}
@@ -177,7 +197,9 @@ func BenchmarkFullPipeline(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 
@@ -191,7 +213,9 @@ func BenchmarkFullPipeline(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 
@@ -205,7 +229,9 @@ func BenchmarkFullPipeline(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }
@@ -217,7 +243,9 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 
@@ -227,7 +255,9 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }
@@ -238,7 +268,9 @@ func BenchmarkParallelGeneration(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = sine.Generate()
+			if _, err := sine.Generate(); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }
@@ -249,7 +281,9 @@ func BenchmarkParallelWriteTo(b *testing.B) {
 		sine := NewSine(440.0, 100*time.Millisecond)
 		for pb.Next() {
 			var buf bytes.Buffer
-			_, _ = sine.WriteTo(&buf)
+			if _, err := sine.WriteTo(&buf); err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }

@@ -73,18 +73,18 @@ func TestPCM16_ConvertSample(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    float64
 		expected []byte
+		input    float64
 	}{
 		{
 			name:     "zero value",
-			input:    0.0,
 			expected: []byte{0x00, 0x00},
+			input:    0.0,
 		},
 		{
 			name:     "maximum positive value",
-			input:    1.0,
 			expected: []byte{0xFF, 0x7F}, // 32767 in little-endian
+			input:    1.0,
 		},
 		{
 			name:     "maximum negative value",
@@ -118,18 +118,18 @@ func TestPCM16_Clamping(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    float64
 		expected []byte
+		input    float64
 	}{
 		{
 			name:     "value above 1.0 clamped",
-			input:    2.5,
 			expected: []byte{0xFF, 0x7F}, // should be clamped to 1.0 → 32767
+			input:    2.5,
 		},
 		{
 			name:     "value below -1.0 clamped",
-			input:    -2.5,
 			expected: []byte{0x01, 0x80}, // should be clamped to -1.0 → -32767
+			input:    -2.5,
 		},
 		{
 			name:     "slightly above 1.0",
@@ -179,8 +179,8 @@ func TestPCM32_ConvertSample(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    float64
 		expected []byte
+		input    float64
 	}{
 		{
 			name:     "zero value",
@@ -336,12 +336,12 @@ func TestFloat64_SpecialValues(t *testing.T) {
 // TestAllFormats_ConsistentBehavior ensures all formats handle common cases consistently
 func TestAllFormats_ConsistentBehavior(t *testing.T) {
 	formats := []struct {
-		name   string
 		format AudioFormat
+		name   string
 	}{
-		{"PCM16", PCM16{}},
-		{"PCM32", PCM32{}},
-		{"Float64", Float64{}},
+		{PCM16{}, "PCM16"},
+		{PCM32{}, "PCM32"},
+		{Float64{}, "Float64"},
 	}
 
 	for _, f := range formats {

@@ -20,13 +20,13 @@ func (f PCM16) BitDepth() int {
 
 // Clamp make sure that we never exceed any type limit
 // which could lead to a value oveflow and generate unpredictable
-// behaviour in the sound.
-func Clamp(value, min, max float64) float64 {
-	if value < min {
-		return min
+// behavior in the sound.
+func Clamp(value, minVal, maxVal float64) float64 {
+	if value < minVal {
+		return minVal
 	}
-	if value > max {
-		return max
+	if value > maxVal {
+		return maxVal
 	}
 	return value
 }

@@ -109,10 +109,10 @@ func compareWithGoldenFile(t *testing.T, goldenFilePath string, data []byte) {
 
 	if *updateGolden {
 		// Update mode: write the new golden file
-		err := os.MkdirAll(filepath.Dir(goldenFilePath), 0755)
+		err := os.MkdirAll(filepath.Dir(goldenFilePath), 0o755)
 		require.NoError(t, err, "failed to create testdata directory")
 
-		err = os.WriteFile(goldenFilePath, data, 0644)
+		err = os.WriteFile(goldenFilePath, data, 0o644)
 		require.NoError(t, err, "failed to write golden file")
 
 		t.Logf("Updated golden file: %s", goldenFilePath)
@@ -147,58 +147,58 @@ func compareWithGoldenFile(t *testing.T, goldenFilePath string, data []byte) {
 // TestGoldenFiles verifies audio generation produces consistent output
 func TestGoldenFiles(t *testing.T) {
 	tests := []struct {
+		format    format.AudioFormat
 		name      string
-		frequency float64
+		filename  string
 		duration  time.Duration
+		frequency float64
 		amplitude float64
 		sampling  float64
-		format    format.AudioFormat
-		filename  string
 	}{
 		{
-			name:      "440hz_1sec_pcm16",
-			frequency: 440.0,
-			duration:  time.Second,
-			amplitude: 1.0,
-			sampling:  44100.0,
 			format:    format.PCM16{},
-			filename:  "440hz_1sec_pcm16.bin",
-		},
-		{
-			name:      "440hz_1sec_pcm32",
-			frequency: 440.0,
 			duration:  time.Second,
+			name:      "440hz_1sec_pcm16",
+			filename:  "440hz_1sec_pcm16.bin",
+			frequency: 440.0,
 			amplitude: 1.0,
 			sampling:  44100.0,
-			format:    format.PCM32{},
-			filename:  "440hz_1sec_pcm32.bin",
 		},
 		{
-			name:      "1000hz_500ms_pcm16",
-			frequency: 1000.0,
+			format:    format.PCM32{},
+			duration:  time.Second,
+			name:      "440hz_1sec_pcm32",
+			filename:  "440hz_1sec_pcm32.bin",
+			frequency: 440.0,
+			amplitude: 1.0,
+			sampling:  44100.0,
+		},
+		{
+			format:    format.PCM16{},
 			duration:  500 * time.Millisecond,
+			name:      "1000hz_500ms_pcm16",
+			filename:  "1000hz_500ms_pcm16.bin",
+			frequency: 1000.0,
 			amplitude: 0.8,
 			sampling:  44100.0,
-			format:    format.PCM16{},
-			filename:  "1000hz_500ms_pcm16.bin",
 		},
 		{
-			name:      "220hz_100ms_low_amp",
-			frequency: 220.0,
+			format:    format.PCM16{},
 			duration:  100 * time.Millisecond,
+			name:      "220hz_100ms_low_amp",
+			filename:  "220hz_100ms_low_amp.bin",
+			frequency: 220.0,
 			amplitude: 0.3,
 			sampling:  44100.0,
-			format:    format.PCM16{},
-			filename:  "220hz_100ms_low_amp.bin",
 		},
 		{
-			name:      "1hz_1sec_pcm16_low_sampling",
-			frequency: 1.0,
+			format:    format.PCM16{},
 			duration:  time.Second,
+			name:      "1hz_1sec_pcm16_low_sampling",
+			filename:  "1hz_1sec_pcm16_low_sampling.bin",
+			frequency: 1.0,
 			amplitude: 1.0,
 			sampling:  100.0,
-			format:    format.PCM16{},
-			filename:  "1hz_1sec_pcm16_low_sampling.bin",
 		},
 	}
 
@@ -228,40 +228,40 @@ func TestGoldenFiles(t *testing.T) {
 // TestGoldenFiles_EdgeCases tests edge cases with golden files
 func TestGoldenFiles_EdgeCases(t *testing.T) {
 	tests := []struct {
+		format    format.AudioFormat
 		name      string
-		frequency float64
+		filename  string
 		duration  time.Duration
+		frequency float64
 		amplitude float64
 		sampling  float64
-		format    format.AudioFormat
-		filename  string
 	}{
 		{
-			name:      "zero_amplitude",
-			frequency: 440.0,
+			format:    format.PCM16{},
 			duration:  100 * time.Millisecond,
+			name:      "zero_amplitude",
+			filename:  "zero_amplitude.bin",
+			frequency: 440.0,
 			amplitude: 0.0,
 			sampling:  44100.0,
-			format:    format.PCM16{},
-			filename:  "zero_amplitude.bin",
 		},
 		{
-			name:      "very_high_frequency",
-			frequency: 10000.0,
+			format:    format.PCM16{},
 			duration:  50 * time.Millisecond,
+			name:      "very_high_frequency",
+			filename:  "very_high_frequency.bin",
+			frequency: 10000.0,
 			amplitude: 0.5,
 			sampling:  44100.0,
-			format:    format.PCM16{},
-			filename:  "very_high_frequency.bin",
 		},
 		{
-			name:      "very_low_frequency",
-			frequency: 10.0,
+			format:    format.PCM16{},
 			duration:  time.Second,
+			name:      "very_low_frequency",
+			filename:  "very_low_frequency.bin",
+			frequency: 10.0,
 			amplitude: 1.0,
 			sampling:  44100.0,
-			format:    format.PCM16{},
-			filename:  "very_low_frequency.bin",
 		},
 	}
 

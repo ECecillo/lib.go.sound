@@ -1,80 +1,76 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
 linters:
   enable:
-    - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify code
-    - govet         # Standard Go vet checks
-    - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Advanced static analysis
-    - unused        # Find unused code
-    - gofmt         # Check formatting
-    - goimports     # Check imports
-    - misspell      # Find misspellings
-    - unconvert     # Remove unnecessary conversions
-    - unparam       # Find unused function parameters
-    - gocritic      # Opinionated checks
-    - revive        # Fast, configurable, extensible linter
-    - stylecheck    # Style checks
-    - gosec         # Security checks
-
-linters-settings:
-  errcheck:
-    check-blank: true
-    check-type-assertions: true
-
-  govet:
-    check-shadowing: true
-    enable-all: true
-
-  gofmt:
-    simplify: true
-
-  goimports:
-    local-prefixes: github.com/ECecillo/lib.go.sound
-
-  misspell:
-    locale: US
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-    disabled-checks:
-      - commentedOutCode
-      - ifElseChain
-
-  revive:
-    severity: warning
+    - gocritic
+    - gosec
+    - misspell
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    gocritic:
+      disabled-checks:
+        - commentedOutCode
+        - ifElseChain
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    govet:
+      enable-all: true
+    misspell:
+      locale: US
+    revive:
+      severity: warning
+      rules:
+        - name: exported
+          severity: warning
+        - name: unexported-return
+          severity: warning
+        - name: var-naming
+          severity: warning
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1003
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: exported
-        severity: warning
-      - name: unexported-return
-        severity: warning
-      - name: var-naming
-        severity: warning
-
-  stylecheck:
-    checks: ["all", "-ST1000", "-ST1003"]
-
+      - linters:
+          - gocritic
+          - gosec
+          - unparam
+        path: _test\.go
+      - path: _test\.go
+        text: 'mnd:'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - gosec
-        - unparam
-        - gocritic
-
-    # Exclude magic number checks in tests
-    - path: _test\.go
-      text: "mnd:"
-
   max-issues-per-linter: 0
   max-same-issues: 0
-
-output:
-  sort-results: true
+formatters:
+  enable:
+    - gofmt
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

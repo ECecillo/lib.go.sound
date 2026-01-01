@@ -8,6 +8,12 @@
 A Go library for generating and exporting sinusoidal signals with customizable parameters
 such as frequency (`F`), amplitude (`A`), sampling rate (`f`), and duration(`d`).
 
+# License & Attribution
+
+This project is open-source and available under the MIT License. You are welcome to use it commercially or educationally.
+
+Requirement: Please keep the LICENSE file and copyright notice in your project. Appreciated: While not required, a link back to this repository or a mention in your project's documentation is greatly appreciated!
+
 ## TODO
 
 - [] Faire en sorte de pouvoir générer un signal avec une amplitude qui varie en fonction du temps.

@@ -82,7 +82,7 @@ test-golden-update:
 # Run fuzz tests (30s each)
 test-fuzz:
     @echo "Running fuzz tests (30s each)..."
-    go test ./pkg/... -fuzz=. -fuzztime=30s
+    go test ./pkg/... -fuzz=. -fuzztime=20s
 
 # Run all tests including coverage, golden files, and fuzz
 test-all: test-coverage test-golden

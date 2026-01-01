@@ -17,7 +17,8 @@ func (f PCM16) BitDepth() int {
 // how it works under the hood.
 
 func (f PCM16) ConvertSample(sample float64) []byte {
-	value := int16(sample)
+	// Scale the float64 sample to the full int16 range (-32768 to 32767)
+	value := int16(sample * 32767.0)
 	// Little-endian
 	return []byte{byte(value & 0xFF), byte((value >> 8) & 0xFF)}
 }
@@ -29,7 +30,8 @@ func (f PCM32) BitDepth() int {
 }
 
 func (f PCM32) ConvertSample(sample float64) []byte {
-	value := int32(sample)
+	// Scale the float64 sample to the full int32 range (-2147483648 to 2147483647)
+	value := int32(sample * 2147483647.0)
 	return []byte{
 		byte(value & 0xFF), byte((value >> 8) & 0xFF),
 		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),

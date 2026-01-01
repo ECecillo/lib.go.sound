@@ -2,12 +2,18 @@ package sine
 
 import (
 	"bytes"
+	"flag"
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/ECecillo/lib.go.sound/pkg/format"
 	"github.com/stretchr/testify/require"
 )
+
+var updateGolden = flag.Bool("update-golden", false, "update golden test files")
 
 func TestAmplitude(t *testing.T) {
 	sine := NewSine(440.0, time.Second, WithAmplitude(1.0))
@@ -93,4 +99,216 @@ func TestExtremeParameters(t *testing.T) {
 	samples, err = sine.Generate()
 	require.NoError(t, err)
 	require.Len(t, samples, int(sine.SamplingRate*sine.Duration.Seconds()), "Unexpected number of samples")
+}
+
+// Golden file test helpers
+
+// compareWithGoldenFile compares generated audio data with a golden file
+func compareWithGoldenFile(t *testing.T, goldenFilePath string, data []byte) {
+	t.Helper()
+
+	if *updateGolden {
+		// Update mode: write the new golden file
+		err := os.MkdirAll(filepath.Dir(goldenFilePath), 0755)
+		require.NoError(t, err, "failed to create testdata directory")
+
+		err = os.WriteFile(goldenFilePath, data, 0644)
+		require.NoError(t, err, "failed to write golden file")
+
+		t.Logf("Updated golden file: %s", goldenFilePath)
+		return
+	}
+
+	// Compare mode: read and compare with existing golden file
+	goldenData, err := os.ReadFile(goldenFilePath)
+	if os.IsNotExist(err) {
+		t.Fatalf("Golden file does not exist: %s\nRun with -update-golden to create it", goldenFilePath)
+	}
+	require.NoError(t, err, "failed to read golden file")
+
+	if !bytes.Equal(data, goldenData) {
+		t.Errorf("Generated audio does not match golden file: %s", goldenFilePath)
+		t.Errorf("Generated size: %d bytes, Golden size: %d bytes", len(data), len(goldenData))
+
+		// Find first difference
+		minLen := min(len(goldenData), len(data))
+
+		for i := range minLen {
+			if data[i] != goldenData[i] {
+				t.Errorf("First difference at byte %d: got 0x%02x, want 0x%02x", i, data[i], goldenData[i])
+				break
+			}
+		}
+
+		t.Fatal("Golden file mismatch detected")
+	}
+}
+
+// TestGoldenFiles verifies audio generation produces consistent output
+func TestGoldenFiles(t *testing.T) {
+	tests := []struct {
+		name      string
+		frequency float64
+		duration  time.Duration
+		amplitude float64
+		sampling  float64
+		format    format.AudioFormat
+		filename  string
+	}{
+		{
+			name:      "440hz_1sec_pcm16",
+			frequency: 440.0,
+			duration:  time.Second,
+			amplitude: 1.0,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "440hz_1sec_pcm16.bin",
+		},
+		{
+			name:      "440hz_1sec_pcm32",
+			frequency: 440.0,
+			duration:  time.Second,
+			amplitude: 1.0,
+			sampling:  44100.0,
+			format:    format.PCM32{},
+			filename:  "440hz_1sec_pcm32.bin",
+		},
+		{
+			name:      "440hz_1sec_float64",
+			frequency: 440.0,
+			duration:  time.Second,
+			amplitude: 1.0,
+			sampling:  44100.0,
+			format:    format.Float64{},
+			filename:  "440hz_1sec_float64.bin",
+		},
+		{
+			name:      "1000hz_500ms_pcm16",
+			frequency: 1000.0,
+			duration:  500 * time.Millisecond,
+			amplitude: 0.8,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "1000hz_500ms_pcm16.bin",
+		},
+		{
+			name:      "220hz_100ms_low_amp",
+			frequency: 220.0,
+			duration:  100 * time.Millisecond,
+			amplitude: 0.3,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "220hz_100ms_low_amp.bin",
+		},
+		{
+			name:      "1hz_1sec_pcm16_low_sampling",
+			frequency: 1.0,
+			duration:  time.Second,
+			amplitude: 1.0,
+			sampling:  100.0,
+			format:    format.PCM16{},
+			filename:  "1hz_1sec_pcm16_low_sampling.bin",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Generate audio
+			sine := NewSine(
+				tt.frequency,
+				tt.duration,
+				WithAmplitude(tt.amplitude),
+				WithSamplingRate(tt.sampling),
+				WithFormat(tt.format),
+			)
+
+			// Write to buffer
+			var buf bytes.Buffer
+			_, err := sine.WriteTo(&buf)
+			require.NoError(t, err, "failed to generate audio")
+
+			// Compare with golden file
+			goldenPath := filepath.Join("testdata", tt.filename)
+			compareWithGoldenFile(t, goldenPath, buf.Bytes())
+		})
+	}
+}
+
+// TestGoldenFiles_EdgeCases tests edge cases with golden files
+func TestGoldenFiles_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		frequency float64
+		duration  time.Duration
+		amplitude float64
+		sampling  float64
+		format    format.AudioFormat
+		filename  string
+	}{
+		{
+			name:      "zero_amplitude",
+			frequency: 440.0,
+			duration:  100 * time.Millisecond,
+			amplitude: 0.0,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "zero_amplitude.bin",
+		},
+		{
+			name:      "very_high_frequency",
+			frequency: 10000.0,
+			duration:  50 * time.Millisecond,
+			amplitude: 0.5,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "very_high_frequency.bin",
+		},
+		{
+			name:      "very_low_frequency",
+			frequency: 10.0,
+			duration:  time.Second,
+			amplitude: 1.0,
+			sampling:  44100.0,
+			format:    format.PCM16{},
+			filename:  "very_low_frequency.bin",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sine := NewSine(
+				tt.frequency,
+				tt.duration,
+				WithAmplitude(tt.amplitude),
+				WithSamplingRate(tt.sampling),
+				WithFormat(tt.format),
+			)
+
+			var buf bytes.Buffer
+			_, err := sine.WriteTo(&buf)
+			require.NoError(t, err)
+
+			goldenPath := filepath.Join("testdata", tt.filename)
+			compareWithGoldenFile(t, goldenPath, buf.Bytes())
+		})
+	}
+}
+
+// TestGoldenFiles_Consistency ensures multiple generations produce identical output
+func TestGoldenFiles_Consistency(t *testing.T) {
+	sine := NewSine(440.0, 100*time.Millisecond, WithAmplitude(0.8))
+
+	// Generate 3 times
+	outputs := make([][]byte, 3)
+	for i := range 3 {
+		var buf bytes.Buffer
+		_, err := sine.WriteTo(&buf)
+		require.NoError(t, err)
+		outputs[i] = buf.Bytes()
+	}
+
+	// All outputs should be identical
+	require.Equal(t, outputs[0], outputs[1], "First and second generation differ")
+	require.Equal(t, outputs[0], outputs[2], "First and third generation differ")
+	require.Equal(t, outputs[1], outputs[2], "Second and third generation differ")
 }

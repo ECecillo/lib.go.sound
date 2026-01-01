@@ -5,9 +5,9 @@ import (
 )
 
 type AudioFormat interface {
-	BitDepth() int            // BitDepth return an integer representing the byte deph of the format.
-	Quantize(float64) int     // Quantize converts a float64 sample to an integer representation.
-	Encode(int) []byte        // Encode converts the integer value to bytes using byte shifting.
+	BitDepth() int        // BitDepth return an integer representing the byte deph of the format.
+	Quantize(float64) int // Quantize converts a float64 sample to an integer representation.
+	Encode(int) []byte    // Encode converts the integer value to bytes using byte shifting.
 }
 
 type PCM16 struct{}
@@ -15,9 +15,6 @@ type PCM16 struct{}
 func (f PCM16) BitDepth() int {
 	return 16
 }
-
-// NOTE: We could have use std lib function for these functions but its way cooler to understand
-// how it works under the hood.
 
 // Clamp make sure that we never exceed any type limit
 // which could lead to a value oveflow and generate unpredictable

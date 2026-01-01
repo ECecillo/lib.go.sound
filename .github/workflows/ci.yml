@@ -23,7 +23,7 @@ jobs:
         cache: true
 
     - name: Run tests
-      run: go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+      run: go test ./pkg/... -v -race -coverprofile=coverage.out -covermode=atomic
 
     - name: Display coverage
       run: |

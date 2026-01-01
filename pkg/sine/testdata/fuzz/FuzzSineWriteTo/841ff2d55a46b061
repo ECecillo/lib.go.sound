@@ -1,0 +1,6 @@
+go test fuzz v1
+float64(39.400000000000006)
+int64(1)
+float64(54)
+float64(590.0520833333334)
+byte('Q')

@@ -74,7 +74,7 @@ func main() {
 Install the library using `go get`:
 
 ```bash
-go get github.com/your-username/sine
+go get github.com/ececillo/sine
 ```
 
 ## Running Tests

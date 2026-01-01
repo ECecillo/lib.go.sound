@@ -23,6 +23,64 @@ such as frequency (`F`), amplitude (`A`), sampling rate (`f`), and duration(`d`)
 - Output signals in customizable audio formats using an `io.Writer`.
 - Robust and scientifically validated against mathematical properties of sine waves.
 
+## How It Works
+
+The following sequence diagram illustrates the data flow when generating and exporting a sinusoidal signal:
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Sine as Sine Generator
+    participant Gen as Generate()
+    participant Calc as calculateSampleValue()
+    participant Format as AudioFormat
+    participant Writer as io.Writer
+
+    User->>Sine: NewSine(frequency, duration, options...)
+    Sine-->>User: Sine object
+
+    User->>Sine: WriteTo(writer)
+    activate Sine
+
+    Sine->>Gen: Generate()
+    activate Gen
+
+    Note over Gen: Calculate totalSamples<br/>(SamplingRate × Duration)
+
+    loop For each sample n (0 to totalSamples)
+        Gen->>Calc: calculateSampleValue(n)
+        activate Calc
+        Note over Calc: t = n / SamplingRate<br/>angle = 2π × F × t<br/>value = A × sin(angle)
+        Calc-->>Gen: float64 sample
+        deactivate Calc
+    end
+
+    Gen-->>Sine: []float64 samples
+    deactivate Gen
+
+    loop For each sample in samples
+        Sine->>Format: ConvertSample(sample)
+        activate Format
+        Note over Format: Scale to bit depth<br/>Convert to bytes<br/>(little-endian)
+        Format-->>Sine: []byte data
+        deactivate Format
+
+        Sine->>Writer: Write(data)
+        activate Writer
+        Writer-->>Sine: bytes written, error
+        deactivate Writer
+    end
+
+    Sine-->>User: totalBytesWritten, error
+    deactivate Sine
+```
+
+The process consists of three main phases:
+
+1. **Initialization**: Create a Sine generator with desired parameters (frequency, duration, amplitude, sampling rate, and format)
+2. **Generation**: Calculate discrete samples using the sine formula: `A × sin(2π × F × t)`
+3. **Conversion & Export**: Convert each float64 sample to the specified audio format and write to the output
+
 ## Verified Properties
 
 The library has been tested extensively to ensure:

@@ -120,7 +120,7 @@ import (
  "os"
  "time"
 
- "github.com/your-username/sine"
+ "github.com/ECecillo/lib.go.sound/pkg/sine"
 )
 
 func main() {
@@ -241,6 +241,7 @@ just test-coverage
 ```
 
 **Current Coverage:**
+
 - `pkg/format`: 100% ✓
 - `pkg/sine`: 93.5% ✓
 
@@ -270,6 +271,7 @@ just pre-commit
 ```
 
 This runs:
+
 1. All unit tests
 2. Coverage checks
 3. Quick fuzz tests
@@ -294,6 +296,7 @@ just bench-compare
 ```
 
 **Performance Baseline:**
+
 - Format conversion: 4 billion samples/sec
 - Sine generation: 168 million samples/sec (3,800x real-time)
 - Full pipeline: 64 million samples/sec (1,450x real-time)
@@ -305,16 +308,19 @@ just bench-compare
 1. **Make your changes**
 
 2. **Run tests**
+
    ```bash
    just test-coverage
    ```
 
 3. **Check performance**
+
    ```bash
    just bench-compare
    ```
 
 4. **Run pre-commit checks**
+
    ```bash
    just pre-commit
    ```

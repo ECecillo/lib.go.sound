@@ -12,7 +12,7 @@ func BenchmarkPCM16_ConvertSample(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = format.ConvertSample(sample)
+		_ = format.Encode(format.Quantize(sample))
 	}
 }
 
@@ -23,7 +23,7 @@ func BenchmarkPCM16_ConvertSample_Clamping(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = format.ConvertSample(sample)
+		_ = format.Encode(format.Quantize(sample))
 	}
 }
 
@@ -34,7 +34,7 @@ func BenchmarkPCM32_ConvertSample(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = format.ConvertSample(sample)
+		_ = format.Encode(format.Quantize(sample))
 	}
 }
 
@@ -45,7 +45,7 @@ func BenchmarkFloat64_ConvertSample(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = format.ConvertSample(sample)
+		_ = format.Encode(format.Quantize(sample))
 	}
 }
 
@@ -78,7 +78,7 @@ func BenchmarkAllFormats_ConvertSample(b *testing.B) {
 		format := PCM16{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = format.ConvertSample(sample)
+			_ = format.Encode(format.Quantize(sample))
 		}
 	})
 
@@ -86,7 +86,7 @@ func BenchmarkAllFormats_ConvertSample(b *testing.B) {
 		format := PCM32{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = format.ConvertSample(sample)
+			_ = format.Encode(format.Quantize(sample))
 		}
 	})
 
@@ -94,7 +94,7 @@ func BenchmarkAllFormats_ConvertSample(b *testing.B) {
 		format := Float64{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = format.ConvertSample(sample)
+			_ = format.Encode(format.Quantize(sample))
 		}
 	})
 }
@@ -112,7 +112,7 @@ func BenchmarkBatchConversion(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			for _, sample := range samples {
-				_ = format.ConvertSample(sample)
+				_ = format.Encode(format.Quantize(sample))
 			}
 		}
 		b.ReportMetric(float64(numSamples*b.N)/b.Elapsed().Seconds(), "samples/sec")
@@ -123,7 +123,7 @@ func BenchmarkBatchConversion(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			for _, sample := range samples {
-				_ = format.ConvertSample(sample)
+				_ = format.Encode(format.Quantize(sample))
 			}
 		}
 		b.ReportMetric(float64(numSamples*b.N)/b.Elapsed().Seconds(), "samples/sec")
@@ -134,7 +134,7 @@ func BenchmarkBatchConversion(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			for _, sample := range samples {
-				_ = format.ConvertSample(sample)
+				_ = format.Encode(format.Quantize(sample))
 			}
 		}
 		b.ReportMetric(float64(numSamples*b.N)/b.Elapsed().Seconds(), "samples/sec")

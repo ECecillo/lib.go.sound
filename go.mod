@@ -1,6 +1,6 @@
 module github.com/ECecillo/lib.go.sound
 
-go 1.23.3
+go 1.25.1
 
 require github.com/stretchr/testify v1.10.0
 

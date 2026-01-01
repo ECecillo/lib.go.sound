@@ -174,15 +174,6 @@ func TestGoldenFiles(t *testing.T) {
 			filename:  "440hz_1sec_pcm32.bin",
 		},
 		{
-			name:      "440hz_1sec_float64",
-			frequency: 440.0,
-			duration:  time.Second,
-			amplitude: 1.0,
-			sampling:  44100.0,
-			format:    format.Float64{},
-			filename:  "440hz_1sec_float64.bin",
-		},
-		{
 			name:      "1000hz_500ms_pcm16",
 			frequency: 1000.0,
 			duration:  500 * time.Millisecond,

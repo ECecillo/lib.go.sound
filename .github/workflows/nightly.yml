@@ -1,0 +1,191 @@
+name: Nightly Comprehensive Tests
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  comprehensive-tests:
+    name: Comprehensive Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Run comprehensive tests
+      run: go test ./... -v -race -coverprofile=coverage.out -benchtime=2s
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.out
+        flags: comprehensive
+      continue-on-error: true
+
+  extended-fuzzing:
+    name: Extended Fuzz Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      matrix:
+        fuzz-target:
+          - pkg: pkg/format
+            func: FuzzPCM16_ConvertSample
+          - pkg: pkg/format
+            func: FuzzPCM32_ConvertSample
+          - pkg: pkg/format
+            func: FuzzFloat64_ConvertSample
+          - pkg: pkg/format
+            func: FuzzClamp
+          - pkg: pkg/format
+            func: FuzzAllFormats_ConsistentBehavior
+          - pkg: pkg/sine
+            func: FuzzSineGeneration
+          - pkg: pkg/sine
+            func: FuzzSineWriteTo
+          - pkg: pkg/sine
+            func: FuzzCalculateSampleValue
+          - pkg: pkg/sine
+            func: FuzzReproducibility
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Run extended fuzz test
+      run: go test ./${{ matrix.fuzz-target.pkg }}/... -fuzz=${{ matrix.fuzz-target.func }} -fuzztime=2m
+
+    - name: Upload fuzz corpus
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: fuzz-corpus-${{ matrix.fuzz-target.pkg }}-${{ matrix.fuzz-target.func }}
+        path: ${{ matrix.fuzz-target.pkg }}/testdata/fuzz/
+
+  comprehensive-benchmarks:
+    name: Comprehensive Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Run comprehensive benchmarks
+      run: go test ./... -bench=. -benchmem -benchtime=5s | tee benchmark_comprehensive.txt
+
+    - name: Store benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-comprehensive-${{ github.sha }}
+        path: benchmark_comprehensive.txt
+
+    - name: Compare with baseline
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        # Download previous benchmark if it exists
+        if [ -f benchmarks/baseline_latest.txt ]; then
+          echo "Comparing with baseline..."
+          go install golang.org/x/perf/cmd/benchstat@latest
+          benchstat benchmarks/baseline_latest.txt benchmark_comprehensive.txt || true
+        else
+          echo "No baseline found, skipping comparison"
+        fi
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Run tests with memory profiling
+      run: go test ./... -memprofile=mem.prof -memprofilerate=1
+
+    - name: Analyze memory profile
+      run: |
+        go tool pprof -top -sample_index=alloc_space mem.prof
+        go tool pprof -top -sample_index=alloc_objects mem.prof
+
+    - name: Upload memory profile
+      uses: actions/upload-artifact@v4
+      with:
+        name: memory-profile-${{ github.sha }}
+        path: mem.prof
+
+  race-detection:
+    name: Race Detection
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Run tests with race detector
+      run: go test ./... -race -count=10
+
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [comprehensive-tests, extended-fuzzing, comprehensive-benchmarks, memory-profiling, race-detection]
+    if: failure()
+
+    steps:
+    - name: Create issue on failure
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = '🔴 Nightly comprehensive tests failed';
+          const body = `The nightly comprehensive test suite failed.
+
+          **Run Details:**
+          - Run ID: ${{ github.run_id }}
+          - Commit: ${{ github.sha }}
+          - Branch: ${{ github.ref }}
+
+          [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          Please investigate and fix the failing tests.`;
+
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['bug', 'ci-failure']
+          });

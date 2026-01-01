@@ -1,0 +1,103 @@
+name: Benchmark PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  benchmark-comparison:
+    name: Benchmark Comparison
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache: true
+
+    - name: Install benchstat
+      run: go install golang.org/x/perf/cmd/benchstat@latest
+
+    - name: Run benchmarks on PR branch
+      run: go test ./... -bench=. -benchmem -benchtime=1s -count=5 | tee pr_bench.txt
+
+    - name: Checkout base branch
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        git checkout origin/${{ github.base_ref }}
+
+    - name: Run benchmarks on base branch
+      run: go test ./... -bench=. -benchmem -benchtime=1s -count=5 | tee base_bench.txt
+
+    - name: Compare benchmarks
+      id: compare
+      run: |
+        echo "## Benchmark Comparison" > comparison.md
+        echo "" >> comparison.md
+        echo "Comparing PR branch against \`${{ github.base_ref }}\`" >> comparison.md
+        echo "" >> comparison.md
+        echo "\`\`\`" >> comparison.md
+        benchstat base_bench.txt pr_bench.txt >> comparison.md || true
+        echo "\`\`\`" >> comparison.md
+        echo "" >> comparison.md
+        echo "### Legend" >> comparison.md
+        echo "- **Δ%**: Percent change from base to PR" >> comparison.md
+        echo "- Positive Δ% means PR is slower/uses more memory" >> comparison.md
+        echo "- Negative Δ% means PR is faster/uses less memory" >> comparison.md
+        echo "- **~** indicates no statistically significant difference" >> comparison.md
+
+    - name: Comment on PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const comparison = fs.readFileSync('comparison.md', 'utf8');
+
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const botComment = comments.find(comment => {
+            return comment.user.type === 'Bot' && comment.body.includes('Benchmark Comparison');
+          });
+
+          if (botComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: comparison
+            });
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comparison
+            });
+          }
+
+    - name: Check for performance regression
+      run: |
+        # Parse benchstat output to check for significant regressions
+        if grep -E '\+[1-9][0-9]\.[0-9]+%' comparison.md > /dev/null; then
+          echo "⚠️ Potential performance regression detected!"
+          echo "Review the benchmark comparison above."
+        else
+          echo "✓ No significant performance regressions detected"
+        fi

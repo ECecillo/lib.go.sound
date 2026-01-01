@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Run full test suite
+      run: go test ./... -v -race -coverprofile=coverage.out
+
+    - name: Run benchmarks
+      run: go test ./... -bench=. -benchmem -benchtime=2s | tee release_benchmarks.txt
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -z "$PREV_TAG" ]; then
+          echo "First release"
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+        else
+          CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+        fi
+
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create release notes
+      run: |
+        cat > release_notes.md << EOF
+        ## What's Changed
+
+        ${{ steps.changelog.outputs.changelog }}
+
+        ## Test Coverage
+
+        \`\`\`
+        $(go test ./... -cover)
+        \`\`\`
+
+        ## Performance Benchmarks
+
+        \`\`\`
+        $(cat release_benchmarks.txt | head -50)
+        \`\`\`
+
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+        EOF
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: |
+          release_benchmarks.txt
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Save benchmark baseline
+      run: |
+        mkdir -p benchmarks
+        cp release_benchmarks.txt benchmarks/baseline_${{ github.ref_name }}.txt
+        cp release_benchmarks.txt benchmarks/baseline_latest.txt
+
+    - name: Commit baseline
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add benchmarks/
+        git commit -m "chore: update benchmark baseline for ${{ github.ref_name }}" || true
+        git push origin HEAD:main || true

@@ -10,8 +10,7 @@ func BenchmarkPCM16_ConvertSample(b *testing.B) {
 	format := PCM16{}
 	sample := 0.75
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = format.ConvertSample(sample)
 	}
 }
@@ -21,8 +20,7 @@ func BenchmarkPCM16_ConvertSample_Clamping(b *testing.B) {
 	format := PCM16{}
 	sample := 2.5 // Out of range, will be clamped
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = format.ConvertSample(sample)
 	}
 }
@@ -32,8 +30,7 @@ func BenchmarkPCM32_ConvertSample(b *testing.B) {
 	format := PCM32{}
 	sample := 0.75
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = format.ConvertSample(sample)
 	}
 }
@@ -43,8 +40,7 @@ func BenchmarkFloat64_ConvertSample(b *testing.B) {
 	format := Float64{}
 	sample := 0.75
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = format.ConvertSample(sample)
 	}
 }

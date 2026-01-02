@@ -17,8 +17,7 @@ func (s Sine) WriteTo(w io.Writer) (int64, error) {
 	var totalBytesWritten int64
 
 	for i := range len(samples) {
-		quantized := s.Format.Quantize(samples[i])
-		data := s.Format.Encode(quantized)
+		data := s.Format.ConvertSample(samples[i])
 
 		n, err := w.Write(data)
 		if err != nil {

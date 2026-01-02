@@ -12,8 +12,7 @@ import (
 func BenchmarkCalculateSampleValue(b *testing.B) {
 	sine := NewSine(440.0, time.Second)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		_ = sine.calculateSampleValue(i % 44100)
 	}
 }

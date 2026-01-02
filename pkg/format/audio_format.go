@@ -94,3 +94,9 @@ func (f Float64) Encode(value uint64) []byte {
 		byte((value >> 48) & 0xFF), byte((value >> 56) & 0xFF),
 	}
 }
+
+var (
+	_ AudioFormat = new(PCM16)
+	_ AudioFormat = new(PCM32)
+	_ AudioFormat = new(Float64)
+)

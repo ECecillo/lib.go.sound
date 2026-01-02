@@ -105,7 +105,7 @@ func TestPCM16_ConvertSample(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := format.Encode(format.Quantize(tt.input))
+			result := format.ConvertSample(tt.input)
 			require.Equal(t, tt.expected, result, "bytes mismatch for input %f", tt.input)
 			require.Len(t, result, 2, "PCM16 should produce 2 bytes")
 		})
@@ -145,7 +145,7 @@ func TestPCM16_Clamping(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := format.Encode(format.Quantize(tt.input))
+			result := format.ConvertSample(tt.input)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -158,7 +158,7 @@ func TestPCM16_LittleEndian(t *testing.T) {
 	// Convert a known value and verify byte order
 	// 0.5 * 32767 = 16383 = 0x3FFF
 	// Little-endian: low byte first (0xFF), high byte second (0x3F)
-	result := format.Encode(format.Quantize(0.5))
+	result := format.ConvertSample(0.5)
 	require.Equal(t, byte(0xFF), result[0], "low byte should be first (little-endian)")
 	require.Equal(t, byte(0x3F), result[1], "high byte should be second (little-endian)")
 
@@ -206,7 +206,7 @@ func TestPCM32_ConvertSample(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := format.Encode(format.Quantize(tt.input))
+			result := format.ConvertSample(tt.input)
 			require.Equal(t, tt.expected, result, "bytes mismatch for input %f", tt.input)
 			require.Len(t, result, 4, "PCM32 should produce 4 bytes")
 		})
@@ -219,7 +219,7 @@ func TestPCM32_LittleEndian(t *testing.T) {
 
 	// Convert a known value: 0.5 * 2147483647 = 1073741823 = 0x3FFFFFFF
 	// Little-endian: 0xFF 0xFF 0xFF 0x3F
-	result := format.Encode(format.Quantize(0.5))
+	result := format.ConvertSample(0.5)
 	require.Equal(t, byte(0xFF), result[0], "byte 0 should be 0xFF")
 	require.Equal(t, byte(0xFF), result[1], "byte 1 should be 0xFF")
 	require.Equal(t, byte(0xFF), result[2], "byte 2 should be 0xFF")
@@ -255,7 +255,7 @@ func TestFloat64_ConvertSample(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := format.Encode(format.Quantize(tt.input))
+			result := format.ConvertSample(tt.input)
 			require.Len(t, result, 8, "Float64 should produce 8 bytes")
 
 			// Verify we can reconstruct the original value
@@ -288,7 +288,7 @@ func TestFloat64_RoundTrip(t *testing.T) {
 
 	for _, value := range testValues {
 		t.Run("", func(t *testing.T) {
-			bytes := format.Encode(format.Quantize(value))
+			bytes := format.ConvertSample(value)
 
 			// Reconstruct from bytes
 			bits := uint64(bytes[0]) | uint64(bytes[1])<<8 | uint64(bytes[2])<<16 | uint64(bytes[3])<<24 |
@@ -315,7 +315,7 @@ func TestFloat64_SpecialValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bytes := format.Encode(format.Quantize(tt.input))
+			bytes := format.ConvertSample(tt.input)
 			require.Len(t, bytes, 8)
 
 			// Reconstruct
@@ -347,7 +347,7 @@ func TestAllFormats_ConsistentBehavior(t *testing.T) {
 	for _, f := range formats {
 		t.Run(f.name, func(t *testing.T) {
 			// All formats should produce bytes
-			result := f.format.Encode(f.format.Quantize(0.5))
+			result := f.format.ConvertSample(0.5)
 			require.NotNil(t, result)
 			require.Greater(t, len(result), 0)
 

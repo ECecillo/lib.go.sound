@@ -75,15 +75,9 @@ sequenceDiagram
     deactivate Gen
 
     loop For each sample in samples
-        Sine->>Format: Quantize(sample)
+        Sine->>Format: ConvertSample(sample)
         activate Format
-        Note over Format: Scale float64<br/>to integer
-        Format-->>Sine: int quantized
-        deactivate Format
-
-        Sine->>Format: Encode(quantized)
-        activate Format
-        Note over Format: Convert int<br/>to bytes<br/>(little-endian)
+        Note over Format: Scale to bit depth<br/>Convert to bytes<br/>(little-endian)
         Format-->>Sine: []byte data
         deactivate Format
 

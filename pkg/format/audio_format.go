@@ -5,8 +5,11 @@ import (
 )
 
 type AudioFormat interface {
-	BitDepth() int                // BitDepth return an integer representing the byte deph of the format.
-	ConvertSample(float64) []byte // ConvertSample return the sample value in byte using byte shifting.
+	// BitDepth return an integer representing the byte deph of the format.
+	BitDepth() int
+	// ConvertSample combine Quantize and Encode process to
+	// return a sample value in byte using byte shifting.
+	ConvertSample(float64) []byte
 }
 
 type PCM16 struct{}
@@ -15,9 +18,9 @@ func (f PCM16) BitDepth() int {
 	return 16
 }
 
-// Clamp make sure that we never exceed any type limit
-// which could lead to a value oveflow and generate unpredictable
-// behavior in the sound.
+// Clamp bound value to the given min and max so we encounter a value
+// oveflow during our Quantization potentially creating unpredictable
+// behavior.
 func Clamp(value, minVal, maxVal float64) float64 {
 	if value < minVal {
 		return minVal
@@ -29,15 +32,17 @@ func Clamp(value, minVal, maxVal float64) float64 {
 }
 
 func (f PCM16) ConvertSample(sample float64) []byte {
+	value := f.Quantize(sample)
+	return f.Encode(value)
+}
+
+// Quantize scale the float64 sample to the full int16 range (-32768 to 32767)
+func (f PCM16) Quantize(sample float64) int16 {
 	sample = Clamp(sample, -1.0, 1.0)
-	// Scale the float64 sample (usually btw -1.0 and +1.0)
-	// to the full int16 range (-32768 to 32767)
-	//
-	// Example: if we have 0.85 then int16(0.85) = 0 which is false.
-	//
-	// Why 2^(16) - 1 ? to avoid int overflow
-	value := int16(sample * 32767.0)
-	// Little-endian, cutting 16-bits to 2-bytes.
+	return int16(sample * 32767.0)
+}
+
+func (f PCM16) Encode(value int16) []byte {
 	return []byte{byte(value & 0xFF), byte((value >> 8) & 0xFF)}
 }
 
@@ -48,9 +53,17 @@ func (f PCM32) BitDepth() int {
 }
 
 func (f PCM32) ConvertSample(sample float64) []byte {
+	value := f.Quantize(sample)
+	return f.Encode(value)
+}
+
+// Quantize scale the float64 sample to the full int32 range (-2147483648 to 2147483647)
+func (f PCM32) Quantize(sample float64) int32 {
 	sample = Clamp(sample, -1.0, 1.0)
-	// Scale the float64 sample to the full int32 range (-2147483648 to 2147483647)
-	value := int32(sample * 2147483647.0)
+	return int32(sample * 2147483647.0)
+}
+
+func (f PCM32) Encode(value int32) []byte {
 	return []byte{
 		byte(value & 0xFF), byte((value >> 8) & 0xFF),
 		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),
@@ -64,8 +77,16 @@ func (f Float64) BitDepth() int {
 }
 
 func (f Float64) ConvertSample(sample float64) []byte {
-	// (IEEE 754)
-	value := math.Float64bits(sample)
+	value := f.Quantize(sample)
+	return f.Encode(value)
+}
+
+// Quantize converts the float64 sample to IEEE 754 binary representation
+func (f Float64) Quantize(sample float64) uint64 {
+	return math.Float64bits(sample)
+}
+
+func (f Float64) Encode(value uint64) []byte {
 	return []byte{
 		byte(value & 0xFF), byte((value >> 8) & 0xFF),
 		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),

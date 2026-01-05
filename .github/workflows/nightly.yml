@@ -74,7 +74,7 @@ jobs:
 
     - name: Upload fuzz corpus
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: fuzz-corpus-${{ matrix.fuzz-target.pkg }}-${{ matrix.fuzz-target.func }}
         path: ${{ matrix.fuzz-target.pkg }}/testdata/fuzz/
@@ -97,7 +97,7 @@ jobs:
       run: go test ./... -bench=. -benchmem -benchtime=5s | tee benchmark_comprehensive.txt
 
     - name: Store benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: benchmark-comprehensive-${{ github.sha }}
         path: benchmark_comprehensive.txt
@@ -149,7 +149,7 @@ jobs:
         done
 
     - name: Upload memory profiles
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: memory-profiles-${{ github.sha }}
         path: profiles/*.prof

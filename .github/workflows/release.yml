@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*.*.*'
 
+# The default GITHUB_TOKEN is read-only for this repository: creating the
+# release and pushing the benchmark baseline both need contents: write.
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create Release

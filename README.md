@@ -8,27 +8,6 @@
 A Go library for generating and exporting sinusoidal signals with customizable parameters
 such as frequency (`F`), amplitude (`A`), sampling rate (`f`), and duration(`d`).
 
-# License & Attribution
-
-This project is open-source and available under the MIT License. You are welcome to use it commercially or educationally.
-
-Requirement: Please keep the LICENSE file and copyright notice in your project. Appreciated: While not required, a link back to this repository or a mention in your project's documentation is greatly appreciated!
-
-## TODO
-
-- [] Faire en sorte de pouvoir générer un signal avec une amplitude qui varie en fonction du temps.
-  - Comment on peux configurer ça lors de la génération ?
-    - Le problème de départ c'est que l'on utilise l'amplitude comme une constante et non une variable.
-    On pourrait se dire que l'amplitude donné en config du signal est le max que cette dernière peut atteindre.
-    Mais on aura quand même besoin de changer notre fonction de calcule de valeur d'echantillon pour avoir une
-    amplitude variable.
-    - Solution(s) :
-      - Pour moi il faudrait pouvoir générer plusieurs fonctions `sinus` à la suite puis => Marche pas comme on sera
-        calé sur les périodes on terminera jamais à la zeub sur un y différent d'un décalage.
-        - Si on ajoute un décalage sur le départ de la fonction alors et que pour deux fonctions on a pas le même décalage
-        alors on a besoin d'une fonction qui recolle les morceaux.
-  - [] Modifier la fonction qui calcule la valeur de notre echantillon pour avoir une amplitude variable.
-
 ## Features
 
 - Generate discrete sinusoidal signals with precise control over:
@@ -148,7 +127,7 @@ func main() {
 Install the library using `go get`:
 
 ```bash
-go get github.com/ececillo/sine
+go get github.com/ECecillo/lib.go.sound
 ```
 
 ## Getting Started (Local Development)
@@ -242,8 +221,8 @@ just test-coverage
 
 **Current Coverage:**
 
-- `pkg/format`: 100% ✓
-- `pkg/sine`: 93.5% ✓
+- `pkg/format`: 100%
+- `pkg/sine`: 97.8%
 
 ### Running Specific Tests
 
@@ -295,11 +274,13 @@ just bench-baseline
 just bench-compare
 ```
 
-**Performance Baseline:**
+**Measured on an Apple M3 Pro** (`go test ./pkg/... -bench . -benchmem`):
 
-- Format conversion: 4 billion samples/sec
-- Sine generation: 168 million samples/sec (3,800x real-time)
-- Full pipeline: 64 million samples/sec (1,450x real-time)
+- Batch format conversion: ~2.4 billion samples/s, zero allocations
+- Sine generation: ~50–80 million samples/s depending on duration and rate (1,100–1,800× real time)
+- Full pipeline (`WriteTo`, PCM16): ~65 million samples/s (≈1,470× real time), 8 allocations for one second of audio
+
+Pull requests get an automatic `benchstat` comparison against `main` (`.github/workflows/benchmark-pr.yml`).
 
 ## Development Workflow
 
@@ -348,19 +329,9 @@ This library uses four layers of testing:
 
 ### Documentation
 
-- `TESTING.md` - Complete testing guide
-- `BENCHMARKS.md` - Benchmark documentation
-- `FUZZING.md` - Fuzzing guide
-- `JUSTFILE_GUIDE.md` - Just command reference
-- `TEST_SUMMARY.md` - Testing infrastructure overview
-
-### Test Statistics
-
-- **Total test functions**: 49+
-- **Code coverage**: 93.5-100%
-- **Golden files**: 9 reference files
-- **Fuzz functions**: 9 automated tests
-- **Benchmark functions**: 18 performance tests
+- [`.github/CI_DOCUMENTATION.md`](.github/CI_DOCUMENTATION.md): what each workflow runs
+- [`.github/CICD_SETUP.md`](.github/CICD_SETUP.md): setting up the CI/CD pipeline
+- `just --list`: every local command
 
 ## CI/CD
 
@@ -375,3 +346,9 @@ just ci-fast
 ```bash
 just ci-comprehensive
 ```
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE). You may use the library commercially
+or for education. Keep the LICENSE file and the copyright notice; a link back
+to this repository is appreciated but not required.

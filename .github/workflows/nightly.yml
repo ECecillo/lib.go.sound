@@ -76,7 +76,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: fuzz-corpus-${{ matrix.fuzz-target.pkg }}-${{ matrix.fuzz-target.func }}
+        name: fuzz-corpus-${{ matrix.fuzz-target.func }}
         path: ${{ matrix.fuzz-target.pkg }}/testdata/fuzz/
 
   comprehensive-benchmarks:

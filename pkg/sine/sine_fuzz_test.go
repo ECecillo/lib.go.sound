@@ -52,6 +52,7 @@ func FuzzSineGeneration(f *testing.F) {
 		}
 
 		duration := time.Duration(durationMs) * time.Millisecond
+		skipIfTooManySamples(t, samplingRate, duration)
 
 		// Create sine wave - should never panic
 		sine := NewSine(frequency, duration, WithAmplitude(amplitude), WithSamplingRate(samplingRate))
@@ -139,6 +140,7 @@ func FuzzSineWriteTo(f *testing.F) {
 		}
 
 		duration := time.Duration(durationMs) * time.Millisecond
+		skipIfTooManySamples(t, samplingRate, duration)
 
 		// Skip if duration is too short to produce at least one sample
 		if int(samplingRate*duration.Seconds()) < 1 {
@@ -268,6 +270,7 @@ func FuzzReproducibility(f *testing.F) {
 		}
 
 		duration := time.Duration(durationMs) * time.Millisecond
+		skipIfTooManySamples(t, samplingRate, duration)
 
 		// Generate twice with same parameters
 		sine1 := NewSine(frequency, duration, WithAmplitude(amplitude), WithSamplingRate(samplingRate))
@@ -295,4 +298,16 @@ func FuzzReproducibility(f *testing.F) {
 			}
 		}
 	})
+}
+
+// maxFuzzSamples bounds the work of one fuzz iteration. Without it a single
+// input (10 s at 1 MHz) takes long enough to outlive -fuzztime, and the
+// fuzzer reports "context deadline exceeded" instead of a real finding.
+const maxFuzzSamples = 1_000_000
+
+func skipIfTooManySamples(t *testing.T, samplingRate float64, duration time.Duration) {
+	t.Helper()
+	if samplingRate*duration.Seconds() > maxFuzzSamples {
+		t.Skip("too many samples for one fuzz iteration")
+	}
 }

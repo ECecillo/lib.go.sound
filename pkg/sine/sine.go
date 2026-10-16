@@ -4,30 +4,53 @@ import (
 	"fmt"
 	"io"
 	"math"
+
+	"github.com/ECecillo/lib.go.sound/pkg/format"
 )
 
+// writeChunkSamples bounds how many encoded samples are buffered before each
+// Write call: one reusable buffer instead of one allocation and one Write per
+// sample.
+const writeChunkSamples = 4096
+
 // WriteTo will generate samples and write them to the given Writer.
+// The returned count includes bytes accepted by a Write that then failed.
 func (s Sine) WriteTo(w io.Writer) (int64, error) {
 	samples, err := s.Generate()
 	if err != nil {
 		return 0, fmt.Errorf("unable to generate samples, err: %w", err)
 	}
 
-	// Will help us count the number of bytes written.
+	appender, ok := s.Format.(format.SampleAppender)
+	if !ok {
+		appender = convertAppender{s.Format}
+	}
+
+	bytesPerSample := s.Format.BitDepth() / 8
+	buf := make([]byte, 0, min(len(samples), writeChunkSamples)*bytesPerSample)
+
 	var totalBytesWritten int64
+	for start := 0; start < len(samples); start += writeChunkSamples {
+		buf = buf[:0]
+		for _, sample := range samples[start:min(start+writeChunkSamples, len(samples))] {
+			buf = appender.AppendSample(buf, sample)
+		}
 
-	for i := range len(samples) {
-		data := s.Format.ConvertSample(samples[i])
-
-		n, err := w.Write(data)
+		n, err := w.Write(buf)
+		totalBytesWritten += int64(n)
 		if err != nil {
 			return totalBytesWritten, fmt.Errorf("unable to write data, err: %w", err)
 		}
-		totalBytesWritten += int64(n)
-
 	}
 
 	return totalBytesWritten, nil
+}
+
+// convertAppender adapts an AudioFormat that only implements ConvertSample.
+type convertAppender struct{ format.AudioFormat }
+
+func (c convertAppender) AppendSample(dst []byte, sample float64) []byte {
+	return append(dst, c.ConvertSample(sample)...)
 }
 
 func (s Sine) Generate() ([]float64, error) {

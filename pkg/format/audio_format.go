@@ -12,6 +12,13 @@ type AudioFormat interface {
 	ConvertSample(float64) []byte
 }
 
+// SampleAppender is implemented by formats that can encode a sample into an
+// existing buffer. It produces the same bytes as ConvertSample without
+// allocating a slice per sample.
+type SampleAppender interface {
+	AppendSample(dst []byte, sample float64) []byte
+}
+
 type PCM16 struct{}
 
 func (f PCM16) BitDepth() int {
@@ -46,6 +53,11 @@ func (f PCM16) Encode(value int16) []byte {
 	return []byte{byte(value & 0xFF), byte((value >> 8) & 0xFF)}
 }
 
+// AppendSample appends the little-endian PCM16 encoding of sample to dst.
+func (f PCM16) AppendSample(dst []byte, sample float64) []byte {
+	return append(dst, f.Encode(f.Quantize(sample))...)
+}
+
 type PCM32 struct{}
 
 func (f PCM32) BitDepth() int {
@@ -68,6 +80,11 @@ func (f PCM32) Encode(value int32) []byte {
 		byte(value & 0xFF), byte((value >> 8) & 0xFF),
 		byte((value >> 16) & 0xFF), byte((value >> 24) & 0xFF),
 	}
+}
+
+// AppendSample appends the little-endian PCM32 encoding of sample to dst.
+func (f PCM32) AppendSample(dst []byte, sample float64) []byte {
+	return append(dst, f.Encode(f.Quantize(sample))...)
 }
 
 type Float64 struct{}
@@ -95,8 +112,17 @@ func (f Float64) Encode(value uint64) []byte {
 	}
 }
 
+// AppendSample appends the little-endian IEEE 754 encoding of sample to dst.
+func (f Float64) AppendSample(dst []byte, sample float64) []byte {
+	return append(dst, f.Encode(f.Quantize(sample))...)
+}
+
 var (
 	_ AudioFormat = new(PCM16)
 	_ AudioFormat = new(PCM32)
 	_ AudioFormat = new(Float64)
+
+	_ SampleAppender = new(PCM16)
+	_ SampleAppender = new(PCM32)
+	_ SampleAppender = new(Float64)
 )

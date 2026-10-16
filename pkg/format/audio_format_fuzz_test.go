@@ -1,6 +1,7 @@
 package format
 
 import (
+	"bytes"
 	"math"
 	"testing"
 )
@@ -206,6 +207,34 @@ func FuzzAllFormats_ConsistentBehavior(f *testing.F) {
 			if len(result) != expectedBytes {
 				t.Errorf("%s: bit depth %d implies %d bytes, but got %d",
 					ft.name, ft.format.BitDepth(), expectedBytes, len(result))
+			}
+		}
+	})
+}
+
+// FuzzAppendSample_MatchesConvertSample checks that the allocation-free
+// encoder used by sine.WriteTo is byte-identical to ConvertSample and only
+// appends: the existing prefix of dst is left untouched.
+func FuzzAppendSample_MatchesConvertSample(f *testing.F) {
+	for _, seed := range []float64{0, 1, -1, 0.5, -0.5, 2, -2, math.MaxFloat64, -math.MaxFloat64, math.SmallestNonzeroFloat64, math.Inf(1), math.Inf(-1)} {
+		f.Add(seed)
+	}
+	formats := []interface {
+		AudioFormat
+		SampleAppender
+	}{PCM16{}, PCM32{}, Float64{}}
+
+	f.Fuzz(func(t *testing.T, sample float64) {
+		prefix := []byte{0xde, 0xad}
+		for _, ft := range formats {
+			want := ft.ConvertSample(sample)
+			got := ft.AppendSample(append([]byte(nil), prefix...), sample)
+
+			if !bytes.Equal(got[:len(prefix)], prefix) {
+				t.Fatalf("%T.AppendSample(%v) overwrote the existing prefix: %x", ft, sample, got)
+			}
+			if !bytes.Equal(got[len(prefix):], want) {
+				t.Fatalf("%T.AppendSample(%v) = %x, ConvertSample = %x", ft, sample, got[len(prefix):], want)
 			}
 		}
 	})

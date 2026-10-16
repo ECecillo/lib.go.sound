@@ -2,7 +2,9 @@ package sine
 
 import (
 	"bytes"
+	"errors"
 	"flag"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -509,4 +511,58 @@ func TestGoldenFiles_Consistency(t *testing.T) {
 	require.Equal(t, outputs[0], outputs[1], "First and second generation differ")
 	require.Equal(t, outputs[0], outputs[2], "First and third generation differ")
 	require.Equal(t, outputs[1], outputs[2], "Second and third generation differ")
+}
+
+// failAfterWriter accepts up to limit bytes, then fails mid-Write.
+type failAfterWriter struct {
+	limit, written int
+}
+
+var errSinkFull = errors.New("sink full")
+
+func (w *failAfterWriter) Write(p []byte) (int, error) {
+	room := w.limit - w.written
+	if len(p) <= room {
+		w.written += len(p)
+		return len(p), nil
+	}
+	w.written += room
+	return room, errSinkFull
+}
+
+func TestWriteTo_PartialWriteReportsAcceptedBytes(t *testing.T) {
+	sine := NewSine(440.0, time.Second) // 44100 PCM16 samples, several chunks
+	w := &failAfterWriter{limit: writeChunkSamples*2 + 3}
+
+	n, err := sine.WriteTo(w)
+
+	require.ErrorIs(t, err, errSinkFull)
+	require.Equal(t, int64(w.limit), n, "count must include the bytes the failing Write accepted")
+}
+
+// convertOnly hides AppendSample so WriteTo takes its ConvertSample fallback.
+type convertOnly struct{ format.AudioFormat }
+
+func TestWriteTo_ConvertSampleFallbackMatchesAppendPath(t *testing.T) {
+	for _, f := range []format.AudioFormat{format.PCM16{}, format.PCM32{}, format.Float64{}} {
+		fast, slow := &bytes.Buffer{}, &bytes.Buffer{}
+		_, err := NewSine(440.0, 250*time.Millisecond, WithFormat(f)).WriteTo(fast)
+		require.NoError(t, err)
+		_, err = NewSine(440.0, 250*time.Millisecond, WithFormat(convertOnly{f})).WriteTo(slow)
+		require.NoError(t, err)
+		require.Equal(t, slow.Bytes(), fast.Bytes(), "%T: fallback and append paths differ", f)
+	}
+}
+
+func TestWriteTo_AllocationsDoNotScaleWithSampleCount(t *testing.T) {
+	allocs := func(d time.Duration) float64 {
+		sine := NewSine(440.0, d)
+		return testing.AllocsPerRun(5, func() {
+			if _, err := sine.WriteTo(io.Discard); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	require.Equal(t, allocs(100*time.Millisecond), allocs(2*time.Second),
+		"WriteTo allocations grew with the number of samples")
 }
